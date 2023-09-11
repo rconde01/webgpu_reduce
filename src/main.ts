@@ -1,4 +1,4 @@
-import $ from "jquery";
+import $, { data } from "jquery";
 
 import shader from "./wgsl/reduce.wgsl";
 
@@ -15,7 +15,10 @@ const run = async () => {
   const adapter = await navigator.gpu?.requestAdapter();
   const device = (await adapter?.requestDevice()) as GPUDevice;
 
-  const num_data_points = 16384;
+  const workgroup_size = 32;
+
+  // Simplify so that the problem fits exactly into 3 passes
+  const num_data_points = workgroup_size*workgroup_size*workgroup_size;
 
   const test_data = new Float32Array(num_data_points);
 
@@ -37,14 +40,13 @@ const run = async () => {
     input_buffer.unmap();
   }
 
-  const workgroup_size = 64;
 
   // assumes num_data_points is a multiple of the workgroup_size
-  let num_first_pass_workgroups = num_data_points / workgroup_size;
+  let num_workgroups = num_data_points / workgroup_size;
 
   const output_buffer = device.createBuffer({
     label: "output_buffer",
-    size: num_first_pass_workgroups * Float32Array.BYTES_PER_ELEMENT,
+    size: num_workgroups * Float32Array.BYTES_PER_ELEMENT,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
   });
 
@@ -127,11 +129,13 @@ const run = async () => {
     })
   );
 
-  compute_pass.dispatchWorkgroups(num_first_pass_workgroups);
+  compute_pass.dispatchWorkgroups(num_workgroups);
 
-  let data_size = num_first_pass_workgroups;
+  let data_size = num_workgroups;
 
-  //while()
+  while(data_size > 1){
+
+  }
 
   compute_pass.end();
 
