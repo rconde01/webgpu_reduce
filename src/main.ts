@@ -145,14 +145,14 @@ const run = async () => {
 
   device.queue.submit([command_encoder.finish()]);
 
-  output_buffer.mapAsync(GPUMapMode.READ).then(()=>{
+  transfer_buffer.mapAsync(GPUMapMode.READ).then(()=>{
     console.log("CPU Reduce: " + reduce_cpu(test_data));
 
-    var mapped_buffer = output_buffer.getMappedRange(0,Float32Array.BYTES_PER_ELEMENT);
+    var mapped_buffer = transfer_buffer.getMappedRange(0,Float32Array.BYTES_PER_ELEMENT);
 
     console.log("GPU Reduce: " + new Float32Array(mapped_buffer)[0]);
 
-    output_buffer.unmap();
+    transfer_buffer.unmap();
   });
 };
 
