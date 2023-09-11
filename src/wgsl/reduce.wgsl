@@ -27,13 +27,13 @@ struct Data {
 }
 
 @binding(0) @group(0) var<storage,read> global_input: Data;
-@binding(1) @group(0) var<storage,read_writer> global_output: Data;
+@binding(1) @group(0) var<storage,read_write> global_output: Data;
 
 var<workgroup> workgroup_data : array<f32,workgroup_size>;
 
 @compute @workgroup_size(workgroup_size.x,workgroup_size.y,workgroup_size.z)
-fn cs_main(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, 
-           @builtin(workgroup_id) workgroup_id: vec3<u32>) {
+fn reduce_0(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, 
+            @builtin(workgroup_id) workgroup_id: vec3<u32>) {
     let tid = local_invocation_id.x;
     let i = workgroup_id.x*workgroup_size.x + local_invocation_id.x;
     
