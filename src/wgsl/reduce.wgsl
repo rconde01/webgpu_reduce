@@ -69,7 +69,7 @@ fn reduce_1(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
     workgroupBarrier();
 
     for (var s = 1u; s < workgroup_size.x; s *= 2u) {
-        let index = 2u*s*tid;
+        let index = 2u * s * tid;
 
         if index < workgroup_size.x {
             workgroup_data[index] += workgroup_data[index + s];
@@ -98,6 +98,37 @@ fn reduce_2(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
     for (var s = workgroup_size.x / 2u; s > 0u; s >>= 1u) {
         if tid < s {
             workgroup_data[tid] += workgroup_data[tid + s];
+        }
+        workgroupBarrier();
+    }
+
+    if tid == 0u {
+        global_output.data[workgroup_id.x] = workgroup_data[0];
+    }
+}
+
+@compute @workgroup_size(workgroup_size.x,workgroup_size.y,workgroup_size.z)
+fn reduce_3(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
+    let tid = local_invocation_id.x;
+    let i = workgroup_id.x * (workgroup_size.x * 2u) + local_invocation_id.x;
+
+    var my_sum = 0.0;
+
+    if i < arrayLength(&global_input.data) {
+        my_sum = global_input.data[i];
+    }
+
+    if i + workgroup_size.x < arrayLength(&global_input.data) {
+        my_sum += global_input.data[i + workgroup_size.x];
+    }
+
+    workgroup_data[tid] = my_sum;
+    workgroupBarrier();
+
+    for (var s = workgroup_size.x / 2u; s > 0u; s >>= 1u) {
+        if tid < s {
+            my_sum = my_sum + workgroup_data[tid + s];
+            workgroup_data[tid] = my_sum;
         }
         workgroupBarrier();
     }

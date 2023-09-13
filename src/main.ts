@@ -99,7 +99,7 @@ const run = async () => {
     layout: compute_pipeline_layout,
     compute: {
       module: reduce_shader,
-      entryPoint: "reduce_2",
+      entryPoint: "reduce_3",
     },
   });
 
