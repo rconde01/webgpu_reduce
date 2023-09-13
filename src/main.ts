@@ -99,7 +99,7 @@ const run = async () => {
     layout: compute_pipeline_layout,
     compute: {
       module: reduce_shader,
-      entryPoint: "reduce_0",
+      entryPoint: "reduce_1",
     },
   });
 
@@ -158,13 +158,14 @@ const run = async () => {
             resource: {
               label: "global_input",
               buffer: input_buffer,
+              size: data_size*Float32Array.BYTES_PER_ELEMENT
             },
           },
           {
             binding: 1,
             resource: {
               label: "global_output",
-              buffer: output_buffer,
+              buffer: output_buffer
             },
           },
         ],

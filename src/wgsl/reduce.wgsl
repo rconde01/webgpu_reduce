@@ -20,7 +20,7 @@
 //                                global_invocation_index                unique index within all invocations 
 //                                                                       wgi * wgs + liid
 
-const workgroup_size = vec3<u32>(32u,1u,1u);
+const workgroup_size = vec3<u32>(32u, 1u, 1u);
 
 struct Data {
     data: array<f32>
@@ -29,25 +29,55 @@ struct Data {
 @binding(0) @group(0) var<storage,read> global_input: Data;
 @binding(1) @group(0) var<storage,read_write> global_output: Data;
 
-var<workgroup> workgroup_data : array<f32,workgroup_size.x>;
+var<workgroup> workgroup_data : array<f32,workgroup_size.x*workgroup_size.y*workgroup_size.z>;
 
 @compute @workgroup_size(workgroup_size.x,workgroup_size.y,workgroup_size.z)
-fn reduce_0(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, 
-            @builtin(workgroup_id) workgroup_id: vec3<u32>) {
+fn reduce_0(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
     let tid = local_invocation_id.x;
-    let i = workgroup_id.x*workgroup_size.x + local_invocation_id.x;
-    
-    workgroup_data[tid] = global_input.data[i];
+    let i = workgroup_id.x * workgroup_size.x + local_invocation_id.x;
+
+    if i < arrayLength(&global_input.data) {
+        workgroup_data[tid] = global_input.data[i];
+    } else {
+        workgroup_data[tid] = 0.0;
+    }
     workgroupBarrier();
 
-    for(var s = 1u; s < workgroup_size.x; s *= 2u){
-        if(tid % (2u*s) == 0u){
+    for (var s = 1u; s < workgroup_size.x; s *= 2u) {
+        if tid % (2u * s) == 0u {
             workgroup_data[tid] += workgroup_data[tid + s];
         }
         workgroupBarrier();
     }
 
-    if(tid == 0u){
+    if tid == 0u {
+        global_output.data[workgroup_id.x] = workgroup_data[0];
+    }
+}
+
+@compute @workgroup_size(workgroup_size.x,workgroup_size.y,workgroup_size.z)
+fn reduce_1(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
+    let tid = local_invocation_id.x;
+    let i = workgroup_id.x * workgroup_size.x + local_invocation_id.x;
+
+    if i < arrayLength(&global_input.data) {
+        workgroup_data[tid] = global_input.data[i];
+    } else {
+        workgroup_data[tid] = 0.0;
+    }
+
+    workgroupBarrier();
+
+    for (var s = 1u; s < workgroup_size.x; s *= 2u) {
+        let index = 2u*s*tid;
+
+        if index < workgroup_size.x {
+            workgroup_data[index] += workgroup_data[index + s];
+        }
+        workgroupBarrier();
+    }
+
+    if tid == 0u {
         global_output.data[workgroup_id.x] = workgroup_data[0];
     }
 }
