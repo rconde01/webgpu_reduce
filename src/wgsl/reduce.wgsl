@@ -81,3 +81,28 @@ fn reduce_1(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
         global_output.data[workgroup_id.x] = workgroup_data[0];
     }
 }
+
+@compute @workgroup_size(workgroup_size.x,workgroup_size.y,workgroup_size.z)
+fn reduce_2(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
+    let tid = local_invocation_id.x;
+    let i = workgroup_id.x * workgroup_size.x + local_invocation_id.x;
+
+    if i < arrayLength(&global_input.data) {
+        workgroup_data[tid] = global_input.data[i];
+    } else {
+        workgroup_data[tid] = 0.0;
+    }
+
+    workgroupBarrier();
+
+    for (var s = workgroup_size.x / 2u; s > 0u; s >>= 1u) {
+        if tid < s {
+            workgroup_data[tid] += workgroup_data[tid + s];
+        }
+        workgroupBarrier();
+    }
+
+    if tid == 0u {
+        global_output.data[workgroup_id.x] = workgroup_data[0];
+    }
+}
