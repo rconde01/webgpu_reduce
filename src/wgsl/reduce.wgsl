@@ -20,7 +20,7 @@
 //                                global_invocation_index                unique index within all invocations 
 //                                                                       wgi * wgs + liid
 
-const workgroup_size = vec3<u32>(64u,1u,1u);
+const workgroup_size = vec3<u32>(32u,1u,1u);
 
 struct Data {
     data: array<f32>
@@ -29,7 +29,7 @@ struct Data {
 @binding(0) @group(0) var<storage,read> global_input: Data;
 @binding(1) @group(0) var<storage,read_write> global_output: Data;
 
-var<workgroup> workgroup_data : array<f32,workgroup_size>;
+var<workgroup> workgroup_data : array<f32,workgroup_size.x>;
 
 @compute @workgroup_size(workgroup_size.x,workgroup_size.y,workgroup_size.z)
 fn reduce_0(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, 
