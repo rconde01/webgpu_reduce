@@ -127,8 +127,7 @@ fn reduce_3(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
 
     for (var s = workgroup_size.x / 2u; s > 0u; s >>= 1u) {
         if tid < s {
-            my_sum = my_sum + workgroup_data[tid + s];
-            workgroup_data[tid] = my_sum;
+            workgroup_data[tid] += workgroup_data[tid + s];
         }
         workgroupBarrier();
     }
