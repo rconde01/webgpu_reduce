@@ -20,7 +20,7 @@
 //                                global_invocation_index                unique index within all invocations 
 //                                                                       wgi * wgs + liid
 
-const workgroup_size = vec3<u32>(32u, 1u, 1u);
+const workgroup_size = 32u;
 
 struct Data {
     data: array<f32>
@@ -29,12 +29,12 @@ struct Data {
 @binding(0) @group(0) var<storage,read> global_input: Data;
 @binding(1) @group(0) var<storage,read_write> global_output: Data;
 
-var<workgroup> workgroup_data : array<f32,workgroup_size.x*workgroup_size.y*workgroup_size.z>;
+var<workgroup> workgroup_data : array<f32,workgroup_size>;
 
-@compute @workgroup_size(workgroup_size.x,workgroup_size.y,workgroup_size.z)
+@compute @workgroup_size(workgroup_size)
 fn reduce_0(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
     let tid = local_invocation_id.x;
-    let i = workgroup_id.x * workgroup_size.x + local_invocation_id.x;
+    let i = workgroup_id.x * workgroup_size + local_invocation_id.x;
 
     if i < arrayLength(&global_input.data) {
         workgroup_data[tid] = global_input.data[i];
@@ -43,7 +43,7 @@ fn reduce_0(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
     }
     workgroupBarrier();
 
-    for (var s = 1u; s < workgroup_size.x; s *= 2u) {
+    for (var s = 1u; s < workgroup_size; s *= 2u) {
         if tid % (2u * s) == 0u {
             workgroup_data[tid] += workgroup_data[tid + s];
         }
@@ -55,10 +55,10 @@ fn reduce_0(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
     }
 }
 
-@compute @workgroup_size(workgroup_size.x,workgroup_size.y,workgroup_size.z)
+@compute @workgroup_size(workgroup_size)
 fn reduce_1(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
     let tid = local_invocation_id.x;
-    let i = workgroup_id.x * workgroup_size.x + local_invocation_id.x;
+    let i = workgroup_id.x * workgroup_size + local_invocation_id.x;
 
     if i < arrayLength(&global_input.data) {
         workgroup_data[tid] = global_input.data[i];
@@ -68,10 +68,10 @@ fn reduce_1(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
 
     workgroupBarrier();
 
-    for (var s = 1u; s < workgroup_size.x; s *= 2u) {
+    for (var s = 1u; s < workgroup_size; s *= 2u) {
         let index = 2u * s * tid;
 
-        if index < workgroup_size.x {
+        if index < workgroup_size {
             workgroup_data[index] += workgroup_data[index + s];
         }
         workgroupBarrier();
@@ -82,10 +82,10 @@ fn reduce_1(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
     }
 }
 
-@compute @workgroup_size(workgroup_size.x,workgroup_size.y,workgroup_size.z)
+@compute @workgroup_size(workgroup_size)
 fn reduce_2(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
     let tid = local_invocation_id.x;
-    let i = workgroup_id.x * workgroup_size.x + local_invocation_id.x;
+    let i = workgroup_id.x * workgroup_size + local_invocation_id.x;
 
     if i < arrayLength(&global_input.data) {
         workgroup_data[tid] = global_input.data[i];
@@ -95,7 +95,7 @@ fn reduce_2(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
 
     workgroupBarrier();
 
-    for (var s = workgroup_size.x / 2u; s > 0u; s >>= 1u) {
+    for (var s = workgroup_size / 2u; s > 0u; s >>= 1u) {
         if tid < s {
             workgroup_data[tid] += workgroup_data[tid + s];
         }
@@ -107,10 +107,10 @@ fn reduce_2(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
     }
 }
 
-@compute @workgroup_size(workgroup_size.x,workgroup_size.y,workgroup_size.z)
+@compute @workgroup_size(workgroup_size)
 fn reduce_3(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
     let tid = local_invocation_id.x;
-    let i = workgroup_id.x * (workgroup_size.x * 2u) + local_invocation_id.x;
+    let i = workgroup_id.x * (workgroup_size * 2u) + local_invocation_id.x;
 
     var my_sum = 0.0;
 
@@ -118,21 +118,22 @@ fn reduce_3(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
         my_sum = global_input.data[i];
     }
 
-    if i + workgroup_size.x < arrayLength(&global_input.data) {
-        my_sum += global_input.data[i + workgroup_size.x];
+    if i + workgroup_size < arrayLength(&global_input.data) {
+        my_sum += global_input.data[i + workgroup_size];
     }
 
     workgroup_data[tid] = my_sum;
     workgroupBarrier();
 
-    for (var s = workgroup_size.x / 2u; s > 0u; s >>= 1u) {
+    for (var s = workgroup_size / 2u; s > 0u; s >>= 1u) {
         if tid < s {
-            workgroup_data[tid] += workgroup_data[tid + s];
+            my_sum += workgroup_data[tid + s];
+            workgroup_data[tid] = my_sum;
         }
         workgroupBarrier();
     }
 
     if tid == 0u {
-        global_output.data[workgroup_id.x] = workgroup_data[0];
+        global_output.data[workgroup_id.x] = my_sum;
     }
 }
