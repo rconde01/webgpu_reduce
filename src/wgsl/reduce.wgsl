@@ -20,7 +20,7 @@
 //                                global_invocation_index                unique index within all invocations 
 //                                                                       wgi * wgs + liid
 
-const workgroup_size = 32u;
+override workgroup_size = 32u;
 
 struct Data {
     data: array<f32>
