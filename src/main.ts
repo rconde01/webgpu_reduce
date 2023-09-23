@@ -336,7 +336,7 @@ let run = async () => {
   ];
 
   for (let num_points of num_points_options) {
-    for(let algo_number in [0,1,2,3]){
+    for (let algo_number in [0, 1, 2, 3]) {
       run_case(
         vendor!,
         device,
@@ -358,3 +358,18 @@ let run = async () => {
 };
 
 run();
+
+var postMessagePending = 0;
+
+const num_;
+
+window.onmessage = () => {
+  postMessagePending--;
+
+  if (postMessagePending == 0) {
+    postMessagePending++;
+    window.postMessage("", "*");
+  }
+};
+
+window.postMessage("", "*");
