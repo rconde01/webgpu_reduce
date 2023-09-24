@@ -164,7 +164,7 @@ let init = async () => {
     for (let workgroupSize of workgroupSizeOptions) {
       for (let algoNumber of [0, 1, 2, 3]) {
         testCases.push({
-          algorithm: "reduce_" + algoNumber.toString(),
+          algorithm: "reduce" + algoNumber.toString(),
           numPoints: numPoints,
           workgroupSize: workgroupSize,
         });

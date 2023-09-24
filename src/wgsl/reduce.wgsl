@@ -32,7 +32,7 @@ struct Data {
 var<workgroup> workgroup_data : array<f32,workgroup_size>;
 
 @compute @workgroup_size(workgroup_size)
-fn reduce_0(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
+fn reduce0(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
     let tid = local_invocation_id.x;
     let i = workgroup_id.x * workgroup_size + local_invocation_id.x;
 
@@ -56,7 +56,7 @@ fn reduce_0(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
 }
 
 @compute @workgroup_size(workgroup_size)
-fn reduce_1(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
+fn reduce1(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
     let tid = local_invocation_id.x;
     let i = workgroup_id.x * workgroup_size + local_invocation_id.x;
 
@@ -83,7 +83,7 @@ fn reduce_1(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
 }
 
 @compute @workgroup_size(workgroup_size)
-fn reduce_2(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
+fn reduce2(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
     let tid = local_invocation_id.x;
     let i = workgroup_id.x * workgroup_size + local_invocation_id.x;
 
@@ -108,7 +108,7 @@ fn reduce_2(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @built
 }
 
 @compute @workgroup_size(workgroup_size)
-fn reduce_3(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
+fn reduce3(@builtin(local_invocation_id) local_invocation_id: vec3<u32>, @builtin(workgroup_id) workgroup_id: vec3<u32>) {
     let tid = local_invocation_id.x;
     let i = workgroup_id.x * (workgroup_size * 2u) + local_invocation_id.x;
 
