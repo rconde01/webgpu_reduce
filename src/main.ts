@@ -215,6 +215,21 @@ const init_case = (device: GPUDevice, test_case: TestCase) => {
   });
 };
 
+function calculateNumDispatches(testCase: TestCase): number {
+  let dataSize = testCase.num_points;
+
+  var numDispatches = 0;
+
+  while(dataSize > 1){
+    let num_workgroups = Math.ceil(dataSize / testCase.workgroup_size);
+    dataSize = num_workgroups;
+
+    numDispatches++;
+  }
+
+  return numDispatches;
+}
+
 const reduce = (
   device: GPUDevice,
   test_data_size: number,
@@ -369,14 +384,16 @@ window.onmessage = () => {
   caseCount += casesPerPost;
 
   if (caseCount >= maxCaseCount) {
-    testIndex++;
     caseCount = 0;
     const casesPerSecond = Math.floor(
       (1000.0 * maxCaseCount) / (Date.now() - caseStartTime)
     );
+    const numDispatches = calculateNumDispatches(testCases[testIndex]);
     console.log(
-      `${test_case.algorithm} ${test_case.workgroup_size} ${test_case.num_points.toLocaleString()}: ${casesPerSecond.toLocaleString()}`
+      `${test_case.algorithm} ${test_case.workgroup_size} ${test_case.num_points.toLocaleString()} ${numDispatches}: ${casesPerSecond.toLocaleString()}`
     );
+
+    testIndex++;
   }
 
   if (testIndex === testCases.length) {
