@@ -96,6 +96,7 @@ let init = async () => {
       maxComputeWorkgroupSizeX: adapter.limits.maxComputeWorkgroupSizeX,
       maxComputeInvocationsPerWorkgroup:
         adapter.limits.maxComputeInvocationsPerWorkgroup,
+        maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize
     },
   })) as GPUDevice;
   vendor = (await adapter?.requestAdapterInfo())?.vendor;
@@ -106,13 +107,15 @@ let init = async () => {
 
   working_buffer_0 = device.createBuffer({
     label: "working_buffer_0",
-    size: max_workgroup_size * Float32Array.BYTES_PER_ELEMENT,
+    size: max_workgroups * max_workgroup_size * Float32Array.BYTES_PER_ELEMENT,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
   });
 
   working_buffer_1 = device.createBuffer({
     label: "working_buffer_1",
-    size: (max_workgroup_size * Float32Array.BYTES_PER_ELEMENT) / 2,
+    size:
+      (max_workgroups * max_workgroup_size * Float32Array.BYTES_PER_ELEMENT) /
+      2,
     usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
   });
 
@@ -353,8 +356,14 @@ window.onmessage = () => {
     caseStartTime = Date.now();
   }
 
-  for(let i = 0; i < casesPerPost; ++i){
-    reduce(device!, test_case.num_points, test_case.workgroup_size, false, null);
+  for (let i = 0; i < casesPerPost; ++i) {
+    reduce(
+      device!,
+      test_case.num_points,
+      test_case.workgroup_size,
+      false,
+      null
+    );
   }
 
   caseCount += casesPerPost;
@@ -362,8 +371,9 @@ window.onmessage = () => {
   if (caseCount >= maxCaseCount) {
     testIndex++;
     caseCount = 0;
-    const casesPerSecond =
-      Math.floor((1000.0 * maxCaseCount) / (Date.now() - caseStartTime));
+    const casesPerSecond = Math.floor(
+      (1000.0 * maxCaseCount) / (Date.now() - caseStartTime)
+    );
     console.log(
       `${test_case.algorithm} ${test_case.workgroup_size} ${test_case.num_points}: ${casesPerSecond}`
     );
