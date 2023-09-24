@@ -270,7 +270,7 @@ const reduce = (
     }
   };
 
-  // Keep reducing until data_size is 1
+  // Keep reducing until dataSize is 1
   let dataSize = testDataSize;
   let dispatchNum = 0;
   while (dataSize > 1) {
