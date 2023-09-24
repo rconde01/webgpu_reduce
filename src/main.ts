@@ -69,9 +69,9 @@ function get_workgroup_size_options(
 }
 
 interface TestCase {
-  algorithm: string,
-  num_points: number,
-  workgroup_size: number
+  algorithm: string;
+  num_points: number;
+  workgroup_size: number;
 }
 
 let testCases: TestCase[] = [];
@@ -91,13 +91,18 @@ let compute_pipeline: GPUComputePipeline;
 
 let init = async () => {
   adapter = await navigator.gpu?.requestAdapter();
-  device = (await adapter?.requestDevice()) as GPUDevice;
+  device = (await adapter?.requestDevice({
+    requiredLimits: {
+      maxComputeWorkgroupSizeX: adapter.limits.maxComputeWorkgroupSizeX,
+      maxComputeInvocationsPerWorkgroup:
+        adapter.limits.maxComputeInvocationsPerWorkgroup,
+    },
+  })) as GPUDevice;
   vendor = (await adapter?.requestAdapterInfo())?.vendor;
 
   max_workgroup_size = device.limits.maxComputeInvocationsPerWorkgroup;
   max_workgroups = device.limits.maxComputeWorkgroupsPerDimension;
-  max_workgroup_storage_size =
-    device.limits.maxComputeWorkgroupStorageSize;
+  max_workgroup_storage_size = device.limits.maxComputeWorkgroupStorageSize;
 
   working_buffer_0 = device.createBuffer({
     label: "working_buffer_0",
@@ -143,13 +148,7 @@ let init = async () => {
   });
 
   let num_points_options: number[] = [
-    max_workgroup_size,
-    max_workgroup_size * 2,
-    max_workgroup_size * 4,
-    max_workgroup_size * 16,
-    max_workgroup_size * 256,
-    max_workgroup_size * 512,
-    max_workgroup_size * 1024,
+    1_024, 16_384, 131_072, 524_288, 4_194_304,
   ];
 
   for (let num_points of num_points_options) {
@@ -162,12 +161,12 @@ let init = async () => {
       num_points
     );
 
-    for(let workgroup_size of workgroup_size_options){
+    for (let workgroup_size of workgroup_size_options) {
       for (let algo_number of [0, 1, 2, 3]) {
         testCases.push({
           algorithm: "reduce_" + algo_number.toString(),
           num_points,
-          workgroup_size
+          workgroup_size,
         });
       }
     }
@@ -211,14 +210,14 @@ const init_case = (device: GPUDevice, test_case: TestCase) => {
       },
     },
   });
-}
+};
 
 const reduce = (
   device: GPUDevice,
   test_data_size: number,
   workgroup_size: number,
   test_correctness: boolean,
-  test_data_cpu: Float32Array | null,
+  test_data_cpu: Float32Array | null
 ) => {
   let command_encoder = device.createCommandEncoder({
     label: "command_encoder",
@@ -337,7 +336,8 @@ const reduce = (
 
 var postMessagePending = 0;
 
-const maxCaseCount = 1000;
+const casesPerPost = 100;
+const maxCaseCount = 10000;
 
 let caseCount = 0;
 let testIndex = 0;
@@ -348,22 +348,28 @@ window.onmessage = () => {
 
   const test_case = testCases[testIndex];
 
-  if(caseCount === 0){
-    init_case(device!,test_case);
+  if (caseCount === 0) {
+    init_case(device!, test_case);
     caseStartTime = Date.now();
   }
 
-  reduce(device!,test_case.num_points,test_case.workgroup_size,false,null);
-  caseCount++;
-
-  if(caseCount == maxCaseCount){
-    testIndex++;
-    caseCount = 0;
-    const casesPerSecond = 1000.0*maxCaseCount/(Date.now() - caseStartTime);
-    console.log(`${test_case.algorithm} ${test_case.workgroup_size} ${test_case.num_points}: ${casesPerSecond}`)
+  for(let i = 0; i < casesPerPost; ++i){
+    reduce(device!, test_case.num_points, test_case.workgroup_size, false, null);
   }
 
-  if(testIndex === testCases.length - 1){
+  caseCount += casesPerPost;
+
+  if (caseCount >= maxCaseCount) {
+    testIndex++;
+    caseCount = 0;
+    const casesPerSecond =
+      Math.floor((1000.0 * maxCaseCount) / (Date.now() - caseStartTime));
+    console.log(
+      `${test_case.algorithm} ${test_case.workgroup_size} ${test_case.num_points}: ${casesPerSecond}`
+    );
+  }
+
+  if (testIndex === testCases.length) {
     console.log("Tests complete.");
     return;
   }
