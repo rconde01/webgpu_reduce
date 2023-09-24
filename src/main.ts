@@ -351,7 +351,7 @@ const reduce = (
   }
 };
 
-var postMessagePending = 0;
+let postMessagePending = 0;
 
 const casesPerPost = 100;
 const maxCaseCount = 10000;
