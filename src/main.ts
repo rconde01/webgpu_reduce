@@ -375,7 +375,7 @@ window.onmessage = () => {
       (1000.0 * maxCaseCount) / (Date.now() - caseStartTime)
     );
     console.log(
-      `${test_case.algorithm} ${test_case.workgroup_size} ${test_case.num_points}: ${casesPerSecond}`
+      `${test_case.algorithm} ${test_case.workgroup_size} ${test_case.num_points.toLocaleString()}: ${casesPerSecond.toLocaleString()}`
     );
   }
 
